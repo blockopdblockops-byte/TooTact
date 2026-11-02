@@ -1,0 +1,516 @@
+-- Made By: FazeClanBr
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+
+local Window = Rayfield:CreateWindow({
+    Name = "Made By: FazeClanBr",
+    LoadingTitle = "Made By: FazeClanBr",
+    LoadingSubtitle = "ollie's bench",
+    ConfigurationSaving = { Enabled = false },
+})
+
+-- ============================================================
+-- TAB 1: SKY PLATFORM (bring all) — 2100 studs up
+-- ============================================================
+local Tab = Window:CreateTab("Sky Platform", 4483362458)
+local platform, frozen, watchdogConn, centerPos = nil, {}, nil, nil
+
+local function buildPlatform()
+    if platform then platform:Destroy() end
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+    centerPos = root.Position + Vector3.new(0, 2100, 0)
+
+    platform = Instance.new("Part")
+    platform.Size = Vector3.new(300, 4, 60)
+    platform.Position = centerPos
+    platform.Anchored = true
+    platform.CanCollide = true
+    platform.Transparency = 0.2
+    platform.Material = Enum.Material.Neon
+    platform.BrickColor = BrickColor.new("Really black")
+    platform.Parent = Workspace
+
+    for _, off in ipairs({Vector3.new(0,0,30), Vector3.new(0,0,-30), Vector3.new(150,0,0), Vector3.new(-150,0,0)}) do
+        local wall = Instance.new("Part")
+        wall.Size = (off.Z ~= 0) and Vector3.new(300,40,2) or Vector3.new(2,40,60)
+        wall.Position = centerPos + off
+        wall.Anchored = true
+        wall.CanCollide = true
+        wall.Transparency = 1
+        wall.Parent = platform
+    end
+
+    root.CFrame = CFrame.new(centerPos + Vector3.new(0, 6, -20))
+    root.AssemblyLinearVelocity = Vector3.zero
+    return centerPos
+end
+
+local function snapOne(plr)
+    if plr == LocalPlayer then return false end
+    local char = plr.Character
+    if not char then return false end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    if not hrp or not hum or hum.Health <= 0 then return false end
+    hrp.CFrame = CFrame.new(centerPos + Vector3.new(0, 6, 0))
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    hrp.Anchored = true
+    frozen[plr] = true
+    return true
+end
+
+local function bringAll()
+    if not buildPlatform() then return 0 end
+    local n = 0
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if snapOne(plr) then n = n + 1 end
+    end
+    if watchdogConn then watchdogConn:Disconnect() end
+    watchdogConn = RunService.Heartbeat:Connect(function()
+        for plr in pairs(frozen) do
+            local char = plr.Character
+            if char then
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local hum = char:FindFirstChildOfClass("Humanoid")
+                if hrp and hum and hum.Health > 0 then
+                    local target = centerPos + Vector3.new(0, 6, 0)
+                    if (hrp.Position - target).Magnitude > 2 or not hrp.Anchored then
+                        hrp.CFrame = CFrame.new(target)
+                        hrp.Anchored = true
+                    end
+                end
+            end
+        end
+    end)
+    return n
+end
+
+local function releaseAll()
+    if watchdogConn then watchdogConn:Disconnect(); watchdogConn = nil end
+    for plr in pairs(frozen) do
+        local char = plr.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = false end
+    end
+    frozen = {}
+end
+
+Tab:CreateButton({Name = "Bring All + Freeze", Callback = function()
+    local n = bringAll()
+    Rayfield:Notify({Title = "sky bench", Content = n > 0 and (n .. " stacked.") or "no players.", Duration = 4})
+end})
+Tab:CreateButton({Name = "Release All", Callback = function()
+    releaseAll()
+    Rayfield:Notify({Title = "sky bench", Content = "released.", Duration = 3})
+end})
+Tab:CreateButton({Name = "Destroy Platform", Callback = function()
+    releaseAll()
+    if platform then platform:Destroy(); platform = nil end
+    centerPos = nil
+end})
+
+-- ============================================================
+-- TAB 2: BRING ONE — 2150 studs up
+-- ============================================================
+local OneTab = Window:CreateTab("Bring One", 4483362458)
+local onePlatform, oneTarget, oneWatchdog, oneCenter = nil, nil, nil, nil
+
+local function buildOnePlatform()
+    if onePlatform then onePlatform:Destroy() end
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
+    oneCenter = root.Position + Vector3.new(0, 2150, 0)
+
+    onePlatform = Instance.new("Part")
+    onePlatform.Size = Vector3.new(120, 4, 40)
+    onePlatform.Position = oneCenter
+    onePlatform.Anchored = true
+    onePlatform.CanCollide = true
+    onePlatform.Transparency = 0.2
+    onePlatform.Material = Enum.Material.SmoothPlastic
+    onePlatform.BrickColor = BrickColor.new("Really black")
+    onePlatform.Parent = Workspace
+
+    for _, off in ipairs({Vector3.new(0,0,20), Vector3.new(0,0,-20), Vector3.new(60,0,0), Vector3.new(-60,0,0)}) do
+        local wall = Instance.new("Part")
+        wall.Size = (off.Z ~= 0) and Vector3.new(120,30,2) or Vector3.new(2,30,40)
+        wall.Position = oneCenter + off
+        wall.Anchored = true
+        wall.CanCollide = true
+        wall.Transparency = 1
+        wall.Parent = onePlatform
+    end
+
+    root.CFrame = CFrame.new(oneCenter + Vector3.new(0, 6, -14))
+    root.AssemblyLinearVelocity = Vector3.zero
+    return oneCenter
+end
+
+local function clearOne()
+    if oneWatchdog then oneWatchdog:Disconnect(); oneWatchdog = nil end
+    if oneTarget then
+        local char = oneTarget.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then hrp.Anchored = false end
+    end
+    oneTarget = nil
+end
+
+local function bringOne(plr)
+    clearOne()
+    if not buildOnePlatform() then return false end
+    if not plr or plr == LocalPlayer then return false end
+    local char = plr.Character
+    if not char then return false end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return false end
+
+    oneTarget = plr
+    hrp.CFrame = CFrame.new(oneCenter + Vector3.new(0, 6, 0))
+    hrp.AssemblyLinearVelocity = Vector3.zero
+    hrp.Anchored = true
+
+    oneWatchdog = RunService.Heartbeat:Connect(function()
+        if not oneTarget then return end
+        local c = oneTarget.Character
+        if c then
+            local h = c:FindFirstChild("HumanoidRootPart")
+            local hu = c:FindFirstChildOfClass("Humanoid")
+            if h and hu and hu.Health > 0 then
+                local target = oneCenter + Vector3.new(0, 6, 0)
+                if (h.Position - target).Magnitude > 2 or not h.Anchored then
+                    h.CFrame = CFrame.new(target)
+                    h.Anchored = true
+                end
+            end
+        end
+    end)
+    return true
+end
+
+local function getPlayerNames()
+    local names = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then table.insert(names, plr.Name) end
+    end
+    return names
+end
+
+local selectedName = nil
+local PlayerDropdown
+
+PlayerDropdown = OneTab:CreateDropdown({
+    Name = "Choose Player",
+    Options = getPlayerNames(),
+    CurrentOption = {},
+    MultipleOptions = false,
+    Flag = "OneTarget",
+    Callback = function(Option)
+        selectedName = Option[1]
+    end,
+})
+
+OneTab:CreateButton({Name = "Bring Selected", Callback = function()
+    local plr = selectedName and Players:FindFirstChild(selectedName)
+    if bringOne(plr) then
+        Rayfield:Notify({Title = "bring one", Content = selectedName .. " on the black bench.", Duration = 4})
+    else
+        Rayfield:Notify({Title = "bring one", Content = "pick someone first.", Duration = 3})
+    end
+end})
+
+OneTab:CreateButton({Name = "Release", Callback = function()
+    clearOne()
+    Rayfield:Notify({Title = "bring one", Content = "released.", Duration = 3})
+end})
+
+OneTab:CreateButton({Name = "Destroy Platform", Callback = function()
+    clearOne()
+    if onePlatform then onePlatform:Destroy(); onePlatform = nil end
+    oneCenter = nil
+end})
+
+Players.PlayerAdded:Connect(function()
+    task.wait(1)
+    if PlayerDropdown then PlayerDropdown:Refresh(getPlayerNames()) end
+end)
+Players.PlayerRemoving:Connect(function()
+    task.wait(1)
+    if PlayerDropdown then PlayerDropdown:Refresh(getPlayerNames()) end
+end)
+
+-- ============================================================
+-- TAB 3: ESP (two separate toggles) — fixed hide on off
+-- ============================================================
+local EspTab = Window:CreateTab("ESP", 4483362458)
+local EspSection = EspTab:CreateSection("box / health")
+
+local espData = {}
+local boxOn = false
+local healthOn = false
+local espConn = nil
+
+local function hpColor(pct)
+    if pct <= 0.30 then return Color3.fromRGB(255, 40, 40)
+    elseif pct <= 0.60 then return Color3.fromRGB(255, 200, 0)
+    else return Color3.fromRGB(40, 255, 40) end
+end
+
+local function ensureEspObjects(player)
+    if player == LocalPlayer or espData[player] then return end
+    local quad = Drawing.new("Quad")
+    quad.Visible = false
+    quad.Color = Color3.fromRGB(255, 255, 255)
+    quad.Thickness = 1
+    quad.Filled = false
+
+    local text = Drawing.new("Text")
+    text.Visible = false
+    text.Size = 16
+    text.Center = true
+    text.Outline = true
+    text.OutlineColor = Color3.fromRGB(0, 0, 0)
+
+    espData[player] = { quad = quad, text = text }
+end
+
+local function renderBoxes()
+    for plr, data in pairs(espData) do
+        if data.quad then
+            if not boxOn then
+                data.quad.Visible = false
+            else
+                local char = plr.Character
+                local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                local head = char and char:FindFirstChild("Head")
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if hrp and head and hum and hum.Health > 0 then
+                    local cam = Workspace.CurrentCamera
+                    local topPos, topOn = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 1, 0))
+                    local botPos, botOn = cam:WorldToViewportPoint(hrp.Position - Vector3.new(0, 2, 0))
+                    if topOn and botOn then
+                        local height = math.abs(topPos.Y - botPos.Y)
+                        local width = height * 0.55
+                        local cx = topPos.X
+                        local ty = math.min(topPos.Y, botPos.Y)
+                        data.quad.PointA = Vector2.new(cx - width/2, ty)
+                        data.quad.PointB = Vector2.new(cx + width/2, ty)
+                        data.quad.PointC = Vector2.new(cx + width/2, ty + height)
+                        data.quad.PointD = Vector2.new(cx - width/2, ty + height)
+                        data.quad.Visible = true
+                    else
+                        data.quad.Visible = false
+                    end
+                else
+                    data.quad.Visible = false
+                end
+            end
+        end
+    end
+end
+
+local function renderHealth()
+    for plr, data in pairs(espData) do
+        if data.text then
+            if not healthOn then
+                data.text.Visible = false
+            else
+                local char = plr.Character
+                local head = char and char:FindFirstChild("Head")
+                local hum = char and char:FindFirstChildOfClass("Humanoid")
+                if head and hum and hum.Health > 0 then
+                    local cam = Workspace.CurrentCamera
+                    local pos, on = cam:WorldToViewportPoint(head.Position + Vector3.new(0, 2.5, 0))
+                    if on then
+                        local pct = hum.Health / math.max(hum.MaxHealth, 1)
+                        data.text.Text = math.floor(pct * 100) .. "%"
+                        data.text.Color = hpColor(pct)
+                        data.text.Position = Vector2.new(pos.X, pos.Y)
+                        data.text.Visible = true
+                    else
+                        data.text.Visible = false
+                    end
+                else
+                    data.text.Visible = false
+                end
+            end
+        end
+    end
+end
+
+local function ensureAllPlayers()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        ensureEspObjects(plr)
+        if plr.Character then
+            plr.CharacterAdded:Connect(function()
+                task.wait(0.5)
+                ensureEspObjects(plr)
+            end)
+        end
+    end
+end
+
+local function startLoop()
+    ensureAllPlayers()
+    if espConn then espConn:Disconnect() end
+    espConn = RunService.RenderStepped:Connect(function()
+        renderBoxes()
+        renderHealth()
+    end)
+end
+
+EspTab:CreateToggle({
+    Name = "Box ESP (White)",
+    CurrentValue = false,
+    Flag = "BoxEsp",
+    Callback = function(Value)
+        boxOn = Value
+        if Value then
+            startLoop()
+        else
+            for _, data in pairs(espData) do
+                if data.quad then data.quad.Visible = false end
+            end
+        end
+    end,
+})
+
+EspTab:CreateToggle({
+    Name = "Health ESP",
+    CurrentValue = false,
+    Flag = "HealthEsp",
+    Callback = function(Value)
+        healthOn = Value
+        if Value then
+            startLoop()
+        else
+            for _, data in pairs(espData) do
+                if data.text then data.text.Visible = false end
+            end
+        end
+    end,
+})
+
+-- ============================================================
+-- TAB 4: SPECTATE + GOTO
+-- ============================================================
+local SpecTab = Window:CreateTab("Spectate & Goto", 4483362458)
+local specTarget, specConn = nil, nil
+
+local function stopSpectate()
+    if specConn then specConn:Disconnect(); specConn = nil end
+    specTarget = nil
+    local cam = Workspace.CurrentCamera
+    if cam then
+        local myChar = LocalPlayer.Character
+        local myHum = myChar and myChar:FindFirstChildOfClass("Humanoid")
+        if myHum then cam.CameraSubject = myHum end
+    end
+end
+
+local function spectate(plr)
+    stopSpectate()
+    if not plr or plr == LocalPlayer then return end
+    specTarget = plr
+    local cam = Workspace.CurrentCamera
+    if not cam then return end
+    local function attach()
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then cam.CameraSubject = hum end
+    end
+    attach()
+    specConn = plr.CharacterAdded:Connect(function() task.wait(1) attach() end)
+end
+
+local selectedSpec = nil
+local SpecDropdown
+
+SpecDropdown = SpecTab:CreateDropdown({
+    Name = "Choose Player",
+    Options = getPlayerNames(),
+    CurrentOption = {},
+    MultipleOptions = false,
+    Flag = "SpecTarget",
+    Callback = function(Option)
+        selectedSpec = Option[1]
+    end,
+})
+
+SpecTab:CreateButton({Name = "Spectate Selected", Callback = function()
+    local plr = selectedSpec and Players:FindFirstChild(selectedSpec)
+    if plr then
+        spectate(plr)
+        Rayfield:Notify({Title = "spectate", Content = "watching " .. selectedSpec, Duration = 3})
+    end
+end})
+
+SpecTab:CreateButton({Name = "Stop Spectate", Callback = function()
+    stopSpectate()
+    Rayfield:Notify({Title = "spectate", Content = "back to you.", Duration = 3})
+end})
+
+SpecTab:CreateButton({Name = "Goto Selected", Callback = function()
+    local plr = selectedSpec and Players:FindFirstChild(selectedSpec)
+    if not plr then return end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local tchar = plr.Character
+    local thrp = tchar and tchar:FindFirstChild("HumanoidRootPart")
+    if hrp and thrp then
+        hrp.CFrame = thrp.CFrame + Vector3.new(0, 3, 3)
+        Rayfield:Notify({Title = "goto", Content = "at " .. selectedSpec, Duration = 3})
+    end
+end})
+
+Players.PlayerAdded:Connect(function()
+    task.wait(1)
+    if SpecDropdown then SpecDropdown:Refresh(getPlayerNames()) end
+end)
+Players.PlayerRemoving:Connect(function()
+    task.wait(1)
+    if SpecDropdown then SpecDropdown:Refresh(getPlayerNames()) end
+end)
+
+-- ============================================================
+-- TAB 5: MOVEMENT
+-- ============================================================
+local MoveTab = Window:CreateTab("Movement", 4483362458)
+
+MoveTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {16, 5000},
+    Increment = 1,
+    Suffix = "ws",
+    CurrentValue = 16,
+    Flag = "WalkSpeed",
+    Callback = function(Value)
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then hum.WalkSpeed = Value end
+    end,
+})
+
+MoveTab:CreateSlider({
+    Name = "JumpPower",
+    Range = {50, 5000},
+    Increment = 1,
+    Suffix = "jp",
+    CurrentValue = 50,
+    Flag = "JumpPower",
+    Callback = function(Value)
+        local char = LocalPlayer.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum.UseJumpPower = true
+            hum.JumpPower = Value
+        end
+    end,
+})
