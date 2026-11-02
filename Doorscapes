@@ -1,0 +1,116 @@
+-- Trollface RP Toolkit — Delta Mobile
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- clean old
+local old = playerGui:FindFirstChild("OllieGui")
+if old then old:Destroy() end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "OllieGui"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = playerGui
+
+-- ===== helper: make a draggable button =====
+local function makeButton(text, color, yPos, onClick)
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(0, 160, 0, 55)
+	btn.Position = UDim2.new(0, 20, 0, yPos)
+	btn.BackgroundColor3 = color
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 17
+	btn.Text = text
+	btn.BorderSizePixel = 0
+	btn.Active = true
+	btn.Parent = gui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = btn
+
+	local dragging, dragStart, startPos
+	btn.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch
+			or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = btn.Position
+		end
+	end)
+
+	btn.InputChanged:Connect(function(input)
+		if not dragging then return end
+		if input.UserInputType == Enum.UserInputType.Touch
+			or input.UserInputType == Enum.UserInputType.MouseMovement then
+			local delta = input.Position - dragStart
+			btn.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X,
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+
+	btn.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch
+			or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			if (input.Position - dragStart).Magnitude < 10 then
+				onClick()
+			end
+			dragging = false
+		end
+	end)
+
+	return btn
+end
+
+-- ===== DELETE DOORS =====
+makeButton("DELETE DOORS", Color3.fromRGB(140, 30, 180), 200, function()
+	local count = 0
+	for _, obj in ipairs(workspace:GetDescendants()) do
+		if obj:IsA("BasePart") then
+			local n = obj.Name:lower()
+			if n:find("door") or n:find("gate") or n:find("barrier") then
+				for _, d in ipairs(obj:GetDescendants()) do
+					if d:IsA("Script") or d:IsA("LocalScript") then
+						d:Destroy()
+					end
+				end
+				obj.CanCollide = false
+				obj.CanTouch = false
+				obj.Transparency = 1
+				obj:Destroy()
+				count = count + 1
+			end
+		end
+	end
+	print("[OLLIE] destroyed " .. count .. " doors")
+end)
+
+-- ===== NOCLIP ON =====
+makeButton("NOCLIP ON", Color3.fromRGB(30, 160, 60), 265, function()
+	local char = player.Character
+	if not char then return end
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = false
+		end
+	end
+	print("[OLLIE] noclip on")
+end)
+
+-- ===== NOCLIP OFF (clip) =====
+makeButton("NOCLIP OFF", Color3.fromRGB(180, 30, 30), 330, function()
+	local char = player.Character
+	if not char then return end
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
+			part.CanCollide = true
+		end
+	end
+	print("[OLLIE] noclip off")
+end)
+
+print("[OLLIE] toolkit loaded — three buttons, draggable")
